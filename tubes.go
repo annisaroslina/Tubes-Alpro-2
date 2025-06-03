@@ -2,22 +2,25 @@ package main
 
 import "fmt"
 
-const MAX = 100
+const MAX int = 10
 
-type Peminjam struct {
-	Nama string
-	JumlahPinjaman float64
-	Tenor int
-	Bunga float64
-	CicilanBulanan float64
-	StatusLunas bool
+type peminjam struct {
+	nama           string
+	statusLunas    bool
+	tenor          int
+	bunga          float64
+	cicilanBulanan float64
+	jumlahPinjaman float64
 }
 
-var dataPeminjam [MAX]Peminjam
-var jumlahData int = 0
+type tabPeminjam [MAX]peminjam
 
 func main() {
-	for {
+	var pilihan, jumlahPeminjam int
+	var dataPeminjam tabPeminjam
+	jumlahPeminjam = 0
+
+	for pilihan != 9 {
 		fmt.Println("\n===== MENU APLIKASI PINJAMAN =====")
 		fmt.Println("1. Tambah Peminjam")
 		fmt.Println("2. Ubah Data Peminjam")
@@ -30,146 +33,149 @@ func main() {
 		fmt.Println("9. Keluar")
 		fmt.Print("Pilih menu: ")
 
-		var pilihan int
-		fmt.Scanln(&pilihan)
+		fmt.Scan(&pilihan)
 
-		switch pilihan {
-		case 1:
-			tambahPeminjam()
-		case 2:
-			ubahPeminjam()
-		case 3:
-			cariNamaSequential()
-		case 4:
-			cariNamaBinary()
-		case 5:
-			selectionSortByJumlah()
+		if pilihan == 1 {
+			tambahPeminjam(&dataPeminjam, &jumlahPeminjam)
+		} else if pilihan == 2 {
+			ubahPeminjam(&dataPeminjam, jumlahPeminjam)
+		} else if pilihan == 3 {
+			cariNamaSequential(dataPeminjam, jumlahPeminjam)
+		} else if pilihan == 4 {
+			cariNamaBinary(dataPeminjam, jumlahPeminjam)
+		} else if pilihan == 5 {
+			selectionSortByJumlah(dataPeminjam, jumlahPeminjam)
 			fmt.Println("Data berhasil diurutkan berdasarkan jumlah pinjaman.")
-		case 6:
-			insertionSortByTenor()
+		} else if pilihan == 6 {
+			insertionSortByTenor(dataPeminjam, jumlahPeminjam)
 			fmt.Println("Data berhasil diurutkan berdasarkan tenor.")
-		case 7:
-			hapusPeminjam()
-		case 8:
-			tampilkanLaporan()
-		case 9:
-			fmt.Println("Terima kasih! Program selesai.")
-			return
-		default:
-		fmt.Println("Pilihan tidak valid, coba lagi.")
+		} else if pilihan == 7 {
+			hapusPeminjam(&dataPeminjam, &jumlahPeminjam)
+		} else if pilihan == 8 {
+			tampilkanLaporan(dataPeminjam, jumlahPeminjam)
+		} else if pilihan == 9 {
+			fmt.Println("Terima kasih telah menggunakan program ini")
+		} else {
+			fmt.Println("Pilihan tidak valid, coba lagi.")
 		}
 	}
 }
 
-func tambahPeminjam() {
-	if jumlahData >= MAX {
+func tambahPeminjam(A *tabPeminjam, n *int) {
+	var p peminjam
+	if *n >= MAX {
 		fmt.Println("Data penuh, tidak bisa menambahkan lagi.")
 		return
 	}
 
-	var p Peminjam
 	fmt.Print("Nama: ")
-	fmt.Scanln(&p.Nama)
+	fmt.Scan(&p.nama)
 	fmt.Print("Jumlah Pinjaman: ")
-	fmt.Scanln(&p.JumlahPinjaman)
+	fmt.Scan(&p.jumlahPinjaman)
 	fmt.Print("Tenor (bulan): ")
-	fmt.Scanln(&p.Tenor)
+	fmt.Scan(&p.tenor)
 	fmt.Print("Bunga (% per tahun): ")
-	fmt.Scanln(&p.Bunga)
+	fmt.Scan(&p.bunga)
 
 	hitungCicilan(&p)
-	p.StatusLunas = false
+	p.statusLunas = false
 
-	dataPeminjam[jumlahData] = p
-	jumlahData++
+	A[*n] = p
+	*n++
 
-	fmt.Println("Data berhasil ditambahkan!")
+	fmt.Println("Data peminjam berhasil ditambahkan!")
 }
 
-func ubahPeminjam() {
+func ubahPeminjam(A *tabPeminjam, n int) {
 	var nama string
+	var idx int
 	fmt.Print("Masukkan nama peminjam yang mau diubah: ")
-	fmt.Scanln(&nama)
+	fmt.Scan(&nama)
+	idx = cariPeminjamSequential(nama, *A, n)
 
-	var index int = cariPeminjamSequential(nama)
-	if index == -1 {
+	if idx == -1 {
 		fmt.Println("Data tidak ditemukan.")
 		return
 	}
 
 	fmt.Println("Masukkan data baru:")
 	fmt.Print("Jumlah Pinjaman: ")
-	fmt.Scanln(&dataPeminjam[index].JumlahPinjaman)
+	fmt.Scan(&A[idx].jumlahPinjaman)
 	fmt.Print("Tenor (bulan): ")
-	fmt.Scanln(&dataPeminjam[index].Tenor)
+	fmt.Scan(&A[idx].tenor)
 	fmt.Print("Bunga (% per tahun): ")
-	fmt.Scanln(&dataPeminjam[index].Bunga)
+	fmt.Scan(&A[idx].bunga)
 
-	hitungCicilan(&dataPeminjam[index])
+	hitungCicilan(&A[idx])
 	fmt.Println("Data berhasil diubah!")
 }
 
-func hapusPeminjam() {
+func hapusPeminjam(A *tabPeminjam, n *int) {
 	var nama string
-	fmt.Print("Masukkan nama peminjam yang mau dihapus: ")
-	fmt.Scanln(&nama)
+	var i, idx int
 
-	var index int = cariPeminjamSequential(nama)
-	if index == -1 {
+	tampilkanLaporan(*A, *n)
+	fmt.Print("Masukkan nama peminjam yang mau dihapus: ")
+	fmt.Scan(&nama)
+
+	idx = cariPeminjamSequential(nama, *A, *n)
+	if idx == -1 {
 		fmt.Println("Data tidak ditemukan.")
 		return
 	}
 
-	var i int 
-	for i = index; i < jumlahData-1; i++ {
-		dataPeminjam[i] = dataPeminjam[i+1]
+	for i = idx; i < *n-1; i++ {
+		A[i] = A[i+1]
 	}
-	jumlahData--
+	*n--
 
 	fmt.Println("Data berhasil dihapus!")
 }
 
-func hitungCicilan(p *Peminjam) {
-	var bungaPerBulan float64 = p.Bunga / 12 / 100
-	var totalBunga float64 = p.JumlahPinjaman * bungaPerBulan * float64(p.Tenor)
-	var totalPinjaman float64 = p.JumlahPinjaman + totalBunga
-	p.CicilanBulanan = totalPinjaman / float64(p.Tenor)
+func hitungCicilan(p *peminjam) {
+	var bungaPerBulan, totalBunga, totalPinjaman float64
+
+	bungaPerBulan = p.bunga / 12 / 100
+	totalBunga = p.jumlahPinjaman * bungaPerBulan * float64(p.tenor)
+	totalPinjaman = p.jumlahPinjaman + totalBunga
+	p.cicilanBulanan = totalPinjaman / float64(p.tenor)
 }
 
-func cariPeminjamSequential(nama string) int {
-	var i int 
-	for i = 0; i < jumlahData; i++ {
-		if dataPeminjam[i].Nama == nama {
+func cariPeminjamSequential(nama string, A tabPeminjam, n int) int {
+	var i int
+	for i = 0; i < n; i++ {
+		if A[i].nama == nama {
 			return i
 		}
 	}
 	return -1
 }
 
-func cariNamaSequential() {
+func cariNamaSequential(A tabPeminjam, n int) {
 	var nama string
+	var idx int
 	fmt.Print("Masukkan nama yang dicari: ")
-	fmt.Scanln(&nama)
+	fmt.Scan(&nama)
 
-	var idx int = cariPeminjamSequential(nama)
+	idx = cariPeminjamSequential(nama, A, n)
 	if idx != -1 {
-		tampilkanDetail(dataPeminjam[idx])
+		tampilkanDetail(A[idx])
 	} else {
 		fmt.Println("Data tidak ditemukan.")
 	}
 }
 
-func cariPeminjamBinary(nama string) int {
-	var left int = 0
-	var right int = jumlahData - 1
-	var mid int 
+func cariPeminjamBinary(nama string, A tabPeminjam, n int) int {
+	var left, right, mid int
+	left = 0
+	right = n - 1
 
 	for left <= right {
 		mid = (left + right) / 2
-		
-		if dataPeminjam[mid].Nama == nama {
+
+		if A[mid].nama == nama {
 			return mid
-		} else if dataPeminjam[mid].Nama < nama {
+		} else if A[mid].nama < nama {
 			left = mid + 1
 		} else {
 			right = mid - 1
@@ -178,60 +184,70 @@ func cariPeminjamBinary(nama string) int {
 	return -1
 }
 
-func cariNamaBinary() {
+func cariNamaBinary(A tabPeminjam, n int) {
 	var nama string
+	var idx int
 	fmt.Print("Masukkan nama yang dicari (pastikan data sudah diurutkan): ")
-	fmt.Scanln(&nama)
+	fmt.Scan(&nama)
 
-	idx := cariPeminjamBinary(nama)
+	idx = cariPeminjamBinary(nama, A, n)
 	if idx != -1 {
-		tampilkanDetail(dataPeminjam[idx])
+		tampilkanDetail(A[idx])
 	} else {
 		fmt.Println("Data tidak ditemukan.")
 	}
 }
 
-func selectionSortByJumlah() {
-	var i int 
-	for i = 0; i < jumlahData-1; i++ {
-		var min int = i
-		var j int 
-		for j = i + 1; j < jumlahData; j++ {
-			if dataPeminjam[j].JumlahPinjaman < dataPeminjam[min].JumlahPinjaman {
-				min = j
+func selectionSortByJumlah(A tabPeminjam, n int) {
+	var i, idx, pass int
+	var temp peminjam
+
+	pass = 1
+	for pass < n {
+		idx = pass - 1
+		i = pass
+		for i < n {
+			if A[idx].jumlahPinjaman > A[i].jumlahPinjaman {
+				idx = i
 			}
+			i++
 		}
-		var temp Peminjam = dataPeminjam[i]
-		dataPeminjam[i] = dataPeminjam[min]
-		dataPeminjam[min] = temp 
+		temp = A[pass-1]
+		A[pass-1] = A[idx]
+		A[idx] = temp
+		pass++
 	}
+	tampilkanLaporan(A, n)
 }
 
-func insertionSortByTenor() {
-	var i int 
-	for i = 1; i < jumlahData; i++ {
-		var temp Peminjam 
-		temp = dataPeminjam[i]
-		
-		var j int 
-		j = i - 1
-		for j >= 0 && dataPeminjam[j].Tenor > temp.Tenor {
-			dataPeminjam[j+1] = dataPeminjam[j]
-			j--
+func insertionSortByTenor(A tabPeminjam, n int) {
+	var pass, i int
+	var temp peminjam
+
+	pass = 1
+	for pass <= n-1 {
+		i = pass
+		temp = A[pass]
+		for i > 0 && temp.tenor < A[i-1].tenor {
+			A[i] = A[i-1]
+			i--
 		}
-		dataPeminjam[j+1] = temp
+		A[i] = temp
+		pass++
 	}
+
+	tampilkanLaporan(A, n)
 }
 
-func tampilkanLaporan() {
+func tampilkanLaporan(A tabPeminjam, n int) {
+	var i int
 	fmt.Println("===== Laporan Pinjaman =====")
-	var i int 
-	for i = 0; i < jumlahData; i++ {
-		tampilkanDetail(dataPeminjam[i])
+	for i = 0; i < n; i++ {
+		tampilkanDetail(A[i])
 	}
 }
 
-func tampilkanDetail(p Peminjam) {
+func tampilkanDetail(p peminjam) {
 	fmt.Printf("\nNama: %s\nPinjaman: %.2f\nTenor: %d bulan\nBunga: %.2f%%\nCicilan: %.2f\nStatus Lunas: %v\n",
-		p.Nama, p.JumlahPinjaman, p.Tenor, p.Bunga, p.CicilanBulanan, p.StatusLunas)
+		p.nama, p.jumlahPinjaman, p.tenor, p.bunga, p.cicilanBulanan, p.statusLunas)
 }
